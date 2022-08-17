@@ -1,0 +1,60 @@
+#!/bin/bash
+
+#-------------------  Begin SLURM preamble  -------------------------#
+#SBATCH --job-name=cigab_random_forests
+#SBATCH --partition=bluemoon
+#SBATCH --ntasks=1
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=500G
+#SBATCH --time=1-00:00:00
+#SBATCH --mail-type=ALL
+#SBATCH --output=/gpfs1/home/j/m/%u/ci-greedy-agents-base/logs/analysis/%x_%j.log
+#-------------------   End SLURM preamble   -------------------------#
+
+# Echo cluster information
+echo ""
+echo "----- CLUSTER DETAILS -----"
+echo ""
+echo "  running host:    ${SLURMD_NODENAME}"
+echo "  assigned nodes:  ${SLURM_JOB_NODELIST}"
+echo "  partition used:  ${SLURM_JOB_PARTITION}"
+echo "  jobid:           ${SLURM_JOBID}"
+echo ""
+echo "----- DIRECTORY & VARIABLE SETUP -----"
+echo ""
+
+# Specify data directory
+RUNDIR=/gpfs1/home/j/m/jmeluso/ci-greedy-agents-base/src
+
+# Move to model directory
+cd $RUNDIR
+
+echo "  Directory and variables setup successfully."
+echo ""
+echo "  execution set:   ${EXECNUM}"
+echo "  subset:          ${ii} of ${SUBSETS}"
+echo ""
+echo "----- LOAD LIBRARIES -----"
+echo ""
+
+# Load python environment
+source activate miniconda
+
+echo "  Libraries loaded successfully."
+echo ""
+echo "----- BEGIN EXECUTIONS -----"
+echo ""
+
+# Run simulation in python for job ii
+python analysis_random_forests.py
+
+echo ""
+echo "  Execution complete."
+echo ""
+
+# to submit 100 jobs, call the file submit_loop.sh
+# to run live, use the following command:
+#   srun --partition=bluemoon --ntasks=1 --mem=4G --time=4:00:00 --pty /bin/bash
+
+
