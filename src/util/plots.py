@@ -195,18 +195,18 @@ def get_metrics():
             'plot': True,
             'meas_type': 'conn_to_conn',
             'label': 'Decentralization\n(eig. cent. mean)',
-            'annot_loc': (-2.5, 7.5),
-            'use_conn': True,
-            'ha': 'right',
+            'annot_loc': (-2.5, 5),
+            'use_conn': False,
+            'ha': 'center',
             'va': 'bottom'
             },
         'team_graph_centrality_eigenvector_stdev': {
             'plot': False,
             'meas_type': 'conn_to_conn',
-            'label': 'Centralization\n(eig. cent. st. dev.)',
-            'annot_loc': (-2.5, 2.5),
+            'label': 'Varied\ncentralization\n(eig. cent. st. dev.)',
+            'annot_loc': (-5, 5),
             'use_conn': False,
-            'ha': 'right',
+            'ha': 'center',
             'va': 'bottom'
             },
         'team_graph_centrality_betweenness_mean': {

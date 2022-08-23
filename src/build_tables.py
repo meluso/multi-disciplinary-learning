@@ -11,10 +11,105 @@ import pandas as pd
 
 # Import source files
 import fig_settings as fs
+import util.data as ud
 import util.plots as up
+import util.variables as uv
 
-
+All = slice(None)
 fs.set_fonts()
+
+def build_network_measures_table(execset=10):
+    
+    # Get execset data
+    file_in = f'../data/sets/execset{execset:03}_stats.pickle'
+    params2stats = ud.load_pickle(file_in)
+    
+    # Build row indices
+    # name = ['team_performance','team_productivity']
+    name = All
+    stat = 'mean'
+    cols = (name, stat)
+    var2slice = get_var2slice()
+    
+    # Slice dataset down to the following fields:
+    # Model | Graph | Team Fn | Nbhd Fn | name
+    df = params2stats.loc[tuple(var2slice.values()),cols].reset_index()
+    df = df.droplevel(1,axis=1)
+        
+    # Build cumulative variables for fns and graphs
+    var_prefixes = ['team_graph']
+    for prefix in var_prefixes:
+        df = combine_columns(df, prefix)
+    
+    # Drop all the variables we don't need
+    keep_vars = (
+        df.columns.str.startswith('team_graph') \
+        & ~df.columns.str.fullmatch('team_graph_type') \
+        & ~df.columns.str.fullmatch('team_graph_k') \
+        & ~df.columns.str.fullmatch('team_graph_m') \
+        & ~df.columns.str.fullmatch('team_graph_p') \
+        & ~df.columns.str.fullmatch('team_graph_density')
+        )
+    df = df.loc[:,keep_vars]
+    
+    # Reorder columns
+    df = df[['team_graph'] + [c for c in df if c not in ['team_graph']]]
+    
+    # Relabel networks
+    nets = up.get_graph_labels()
+    df = df.replace(nets)
+    df = df.set_index('team_graph')
+    df.index = df.index.set_names('Network type')
+    df = df.sort_index()
+    
+    # Relabel measures
+    measures = up.get_metric_labels()
+    df.columns = [measures[col] for col in df.columns]
+    
+    # fill nans
+    df = df.fillna('')
+    
+    # Print table
+    styler = df.style
+    styler.applymap_index(
+        lambda v: "rot:--rwrap--latex;", axis=1
+        )
+    styler.format(precision=3)
+    print(styler.to_latex(
+        hrules=True,
+        convert_css=True,
+        ))
+    
+    return df
+    
+def get_var2slice():
+    
+    # Build row indices
+    var2slice = {key: All for key in uv.get_default_slices().keys()}
+    var2slice['model_type'] = ['3xx']
+    var2slice['team_size'] = 25
+    var2slice['agent_steplim'] = 0.1
+    var2slice['run_step'] = 0
+    var2slice['team_fn_type'] = 'average'
+    var2slice['team_fn_exponent'] = 'na'
+    var2slice['team_fn_frequency'] = 'na'
+    var2slice['team_fn_weight'] = 'node'
+    var2slice['nbhd_fn_type'] = 'average'
+    var2slice['nbhd_fn_exponent'] = 'na'
+    var2slice['nbhd_fn_frequency'] = 'na'
+    var2slice['nbhd_fn_weight'] = 'node'
+    del var2slice['run_ind']
+    
+    return var2slice
+
+def combine_columns(df, prefix):
+    cols_with_prefix = ['team_graph_type','team_graph_k','team_graph_m','team_graph_p']
+    for col in cols_with_prefix:
+        if prefix in df.columns:
+            df[prefix] = [x + '_' + str(y) for x, y in zip(df[prefix], df[col])]
+        else:
+            df[prefix] = df[col]
+    return df
         
 def build_regression_tables(regs_to_load=[3,4,5,9,10,11]):
     
@@ -176,7 +271,7 @@ def which_network_measures(include_connected_metrics):
 
 def which_task_controls(task_measures_included):
     if task_measures_included == 'both':
-        string = 'Meas. \& Fixed eff.'
+        string = 'Meas. & Fixed eff.'
     elif task_measures_included == 'fes':
         string = 'Fixed effects only'
     else: # Only metrics
@@ -270,5 +365,6 @@ def build_random_forest_tables():
 
 if __name__ == '__main__':
     
-    regtable = build_regression_tables()
+    netstable = build_network_measures_table()
+    # regtable = build_regression_tables()
     # build_random_forest_tables()
