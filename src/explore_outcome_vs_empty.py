@@ -295,7 +295,7 @@ if __name__ == '__main__':
     time = Time()
     
     # Run parameters
-    execset = 7
+    execset = 10
     models = ua.get_execset_models(execset)
     plot_vs_empty(time, execset, models)
     
