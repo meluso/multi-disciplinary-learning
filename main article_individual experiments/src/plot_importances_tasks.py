@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 # Import source files
 import fig_settings as fs
 import plot_importances as pi
+import util.plots as up
 
 fs.set_fonts({
     'font.family': 'Times New Roman',
@@ -103,9 +104,9 @@ def plot_importances_tasks(save=True):
                 transform=ax.transAxes, size=8, ha='center', va='center')
     
     # Guiding arrows & text
-    pi.arrow(ax, (-0.04, 0.35), (-0.04, 0.15))
-    pi.arrow(ax, (-0.04, 0.65), (-0.04, 0.85))
-    pi.arrow(ax, (ximp-0.075, 0.54), (ximp+0.075, 0.54))
+    up.arrow(ax, (-0.04, 0.35), (-0.04, 0.15))
+    up.arrow(ax, (-0.04, 0.65), (-0.04, 0.85))
+    up.arrow(ax, (ximp-0.075, 0.54), (ximp+0.075, 0.54))
     ax.text(x=-0.07, y=0.25, s='More\nlikely\nnegative',
             size=6, clip_on=False, va='center', ha='right', color='#666666',
             transform=ax.transAxes)

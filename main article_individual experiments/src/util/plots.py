@@ -8,6 +8,12 @@ Created on Tue Jan 11 11:23:34 2022
 # Import model files
 import util.analysis as ua
 
+def arrow(ax, xyfrom, xyto, text=''):
+    an = ax.annotate(text=text, xy=xyto, xytext=xyfrom, annotation_clip=False,
+        arrowprops=dict(arrowstyle='->',fc='#AAAAAA',ec='#AAAAAA'),
+        xycoords='axes fraction')
+    return an
+
 def level_indices(dataframe):
     '''Get dictionary of indices of all variables in dataframe.'''
 
@@ -325,26 +331,31 @@ def get_measure_formatting():
         'conn': {
             'color': '#AA0000',
             'marker': 'o',
-            'label': "(d) Individuals' connectedness"
+            'label': "(d) Individuals' connectedness",
+            'pres-label': "Individuals' connectedness"
             },
         'conn_to_conn': {
             'color': '#39AA00',
             'marker': 'D',
-            'label': "(a) Neighbors' connectedness"
+            'label': "(a) Neighbors' connectedness",
+            'pres-label': "Neighbors' connectedness",
             },
         'efficiency': {
             'color': '#3900AA',
             'marker': 'H',
-            'label': "(b) Network efficiency"
+            'label': "(b) Network efficiency",
+            'pres-label': "Network efficiency",
             },
         'grouping': {
             'color': '#AA8E00',
             'marker': 's',
-            'label': "(c) Shared connections"
+            'label': "(c) Shared connections",
+            'pres-label': "Shared connections",
             },
         'task': {
             'color': '#AA008E',
             'marker': 'X',
-            'label': "Task measures"
+            'label': "Task measures",
+            'pres-label': "Task measures",
             },
         }

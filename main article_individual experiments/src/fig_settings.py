@@ -61,3 +61,8 @@ def save_pub_fig(name, dpi=1200, **kwargs):
     for ff in get_formats():
         fname = f'../figures/publication/{ff}/{name}.{ff}'
         plt.savefig(fname, format=ff, dpi=dpi, **kwargs)
+        
+def save_presentation_fig(name, dpi=1200, **kwargs):
+    for ff in get_formats():
+        fname = f'../figures/presentation/{ff}/{name}.{ff}'
+        plt.savefig(fname, format=ff, dpi=dpi, **kwargs)

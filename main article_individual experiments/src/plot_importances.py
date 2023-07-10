@@ -291,11 +291,6 @@ def get_formatting(group2prop2val, metric2prop2val):
             group2prop2val[group][prop] = meas_types.apply(prop_lambda)
             
     return meas2prop2val, group2prop2val
-
-def arrow(ax, xyfrom, xyto, text=''):
-    ax.annotate(text=text, xy=xyto, xytext=xyfrom, annotation_clip=False,
-        arrowprops=dict(arrowstyle='->',fc='#AAAAAA',ec='#AAAAAA'),
-        xycoords='axes fraction')
     
 def draw_lollipop(ax, x, y, error, marker, color, size, label):
     

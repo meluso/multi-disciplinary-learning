@@ -18,8 +18,9 @@ import util.plots as up
 fs.set_fonts()
 All = slice(None)
 
-def plot_outcome_means(execset=10,team_size=9,plot_var='pct_',
-                       base_graph='empty',subfig=None,hyperlocal=False):
+def plot_outcome_means(execset=10, team_size=9, plot_var='pct_',
+                       base_graph='empty', subfig=None, hyperlocal=False,
+                       title_type=None):
     
     # Set plot var names
     plot_lo = f'{plot_var}ci_lo'
@@ -36,19 +37,18 @@ def plot_outcome_means(execset=10,team_size=9,plot_var='pct_',
     outcomes = {
         'team_performance': {
             'title': f'Relative Average\nPerformance ($n={team_size}$)',
-            'indep_label': 'Networks',
+            'indep_label': 'Network Density',
             'dep_label': 'Average Network Performance:\n' + \
-                'Percent Diff. From Individual Learning'
+                'Percent Diff. From Individual Learning'                    
             }
         }
     # Colors for reference:
     # Lightest ['#FFAAAA','#FF5555','#FF0000','#AA0000','#550000'] Darkest
     steplims = {
-        'Global Search': (' ("exploration") ', 1.0, '#550000', '-'),
-        'Intermediate Search': ('', 0.1, '#AA0000', (0, (5, 2))),
-        'Local Search': (' ("exploitation") ', 0.01, '#FF5555', '-.')
+        'Global Search': (' ("exploration") ', 1.0, '#550000', '#AA7F7F'),
+        'Intermediate Search': ('', 0.1, '#AA0000', '#D47F7F'),
+        'Local Search': (' ("exploitation") ', 0.01, '#FF5555', '#FFAAAA')
         }
-    if hyperlocal: steplims['Hyper-Local Search'] = ('', 0.001, '#FFAAAA', '-')
     graphs = up.get_graph_labels()
     
     # Make dataframe into pivot table
@@ -69,7 +69,6 @@ def plot_outcome_means(execset=10,team_size=9,plot_var='pct_',
             True
             )
         ).swaplevel(i=2,j=1,axis=1)
-    indeces = list(df.index)
 
     # Create figure if subfigure isn't passed
     if not subfig:
@@ -78,14 +77,21 @@ def plot_outcome_means(execset=10,team_size=9,plot_var='pct_',
     else:
         ax = subfig.add_subplot(111)
     
+    # Set title
+    if title_type == 'paper_main':
+        title = '(b) Performance by Network Density'
+    elif title_type == 'paper_supplement':
+        title = f'Teams of $n={team_size}$'
+    else: # No title provided
+        title = None
     
-    for ii, (sl_key, (sl_suffix, sl_value, color, ls)) \
-        in enumerate(steplims.items()):
+    
+    for sl_key, (sl_suffix, sl_value, color1, color2) in steplims.items():
             
         # Slice data down to values
         data = df.loc[:,('team_performance',sl_value,All)] \
             .droplevel(['variable','agent_steplim'],axis=1)
-        indep_vars = data.index
+        indep_vars = df.loc[:,('team_graph_density',sl_value,'mean')]
         dep_vals = data[plot_var]
         err_lo = dep_vals - data[plot_lo]
         err_hi = data[plot_hi] - dep_vals
@@ -94,27 +100,22 @@ def plot_outcome_means(execset=10,team_size=9,plot_var='pct_',
         err_lo[f'{base_graph}_na_na_na'] = None
         err_hi[f'{base_graph}_na_na_na'] = None
         
-        ind = plot_horizontal_layout(
-            ax, ii, indep_vars,
+        ind = plot_vertical_layout(
+            ax, indep_vars,
             dep_vals, err_lo, err_hi,
-            sl_key, sl_suffix, sl_value, color, ls,
+            sl_key, sl_suffix, sl_value, color1, color2,
             graphs, outcomes, base_graph
             )
         
     # Set ticks
     ax.grid()
-    indep_labels = [graphs[key] for key in indep_vars]
-    ax.set_yticks(
-        ticks=ind,
-        labels=indep_labels,
-        ha='right'
-        )
         
     # Create labels
-    ax.set_xlabel(outcomes['team_performance']['dep_label'])
-    ax.xaxis.set_major_formatter(ticker.PercentFormatter(xmax=1))
-    base_loc = indep_vars.get_loc(f'{base_graph}_na_na_na')
-    ax.axhline(y=base_loc, linewidth=2, color='#222222', ls='--')
+    ax.set_xlabel(outcomes['team_performance']['indep_label'])
+    ax.set_ylabel(outcomes['team_performance']['dep_label'])
+    ax.yaxis.set_major_formatter(ticker.PercentFormatter(xmax=1))
+    base_loc = 0
+    ax.axvline(x=base_loc, linewidth=2, color='#222222', ls='--')
     
     # Add grid and bold axis
     handles, labels = ax.get_legend_handles_labels()
@@ -130,95 +131,76 @@ def plot_outcome_means(execset=10,team_size=9,plot_var='pct_',
                   columnspacing=0.8,
                   )
     else:
-        ax.set_title(f'Teams of $n={team_size}$')
+        ax.set_title(title)
     ax.grid(True)
-    ax.axvline(linewidth=2,color='#222222')
+    ax.axhline(linewidth=2,color='#222222')
     bottom, top = ax.get_ylim()
     ax.set_ylim(bottom, top)
     ax.set_axisbelow(True)
     fs.set_border(ax)
     ax.tick_params(axis='both', bottom=False, left=False)
     
+    # Add 'performs better' arrow
+    # xpos, ypos, length = -0.18, 0.955, 0.125
+    xpos, ypos, length = 0.14, 0.92, 0.125
+    arrow = up.arrow(ax, (xpos, ypos-length), (xpos, ypos))
+    text = ax.text(x=xpos, y=ypos, s='Performs\nbetter',
+            size=8, clip_on=False, va='bottom', ha='center', color='#666666',
+            transform=ax.transAxes)
+    arrow.set_in_layout(False)
+    text.set_in_layout(False)
+    
+    # Add 'more dense' arrow
+    up.arrow(ax, (0.7, 0.4), (0.85, 0.4))
+    ax.text(x=0.775, y=0.42, s='More  dense',
+            size=8, clip_on=False, va='bottom', ha='center', color='#666666',
+            transform=ax.transAxes)
+    
     
     # Show if fig, return if subfig
     if not subfig:
         plt.tight_layout(rect=(0,0.1,1,1))
-        fs.save_pub_fig(f'relative_performance_{team_size}_agents')
+        fs.save_pub_fig(f'relative_performance_{team_size}_agents_scatter')
         plt.show()
     else:
         return handles, labels
 
         
-def plot_horizontal_layout(ax, ii, indep_vars, dep_vals, err_lo, err_hi,
-    sl_key, sl_suffix, sl_value, color, ls, graphs, outcomes, base_graph):
+def plot_vertical_layout(ax, indep_vars, dep_vals, err_lo, err_hi, sl_key,
+    sl_suffix, sl_value, color1, color2, graphs, outcomes, base_graph):
     
     # Label locations and set bar width
     ind = np.arange(len(indep_vars))  # the label locations
-        
+
+    # Calculate regression coefficients
+    z = np.polyfit(x=indep_vars, y=dep_vals, deg=1)
+    reg_x = np.linspace(0,1,100)
+    reg_y = np.polyval(z, reg_x)
+    
+    # Plot regression line
+    ax.plot(reg_x,reg_y,color=color2,zorder=2.4)        
     
     # Plot on axes
     leg_ent = f'Search radius $={sl_value}${sl_suffix}'
     ax.errorbar(
-        y=ind,
-        x=dep_vals,
-        # height=height,
-        xerr=(err_lo, err_hi),
-        capsize=3,
+        x=indep_vars,
+        y=dep_vals,
+        yerr=(err_lo, err_hi),
+        capsize=2,
         label=leg_ent,
-        color=color,
-        ls=ls
+        color=color1,
+        ecolor=color2,
+        ls='',
+        marker='.',
+        ms=5,
+        elinewidth=1.5,
+        zorder=2.5
         )
     
     return ind
 
-def plot_page():
-    
-    # Team sizes
-    nn = [4,9,16,25]
-    
-    # Create figure
-    fig = plt.figure(
-        figsize=fs.fig_size(1, 0.9),
-        dpi=1200,
-        layout='constrained'
-        )
-    
-    # Create subfigures for the plots and legend
-    subfigs = fig.subfigures(
-        nrows=2,
-        ncols=1,
-        height_ratios=[15,1]
-        )
-    plots = subfigs[0]
-    legend = subfigs[1]
-    
-    # Create subfigures for each plot
-    sub2figs = plots.subfigures(
-        nrows=2,
-        ncols=2,
-        wspace=0.1,
-        hspace=0.05
-        )
-    
-    # Create each subfigure in turn
-    for subfig, n in zip(sub2figs.flat, nn):
-        
-        handles, labels = plot_outcome_means(
-            team_size=n,
-            subfig=subfig,
-            hyperlocal=True
-            )
-    
-    # Add legend
-    legend.legend(handles, labels,
-                  loc='lower center',
-                  bbox_to_anchor=(0.5, 0),
-                  ncol=2
-                  )
-    
-    fs.save_pub_fig('relative_performance_all')
-
 
 if __name__ == '__main__':
     plot_outcome_means(team_size=9)
-    plot_page()
+    # plot_page()
+    # plot_outcomes_by_steplim()
